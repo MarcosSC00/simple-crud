@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="ISO-8859-1">
+
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+	crossorigin="anonymous">
+
+<title>Sistema CRUD</title>
+</head>
+<body>
+	<div class="d-flex flex-column align-items-center p-5">
+		<h3>Sistema CRUD</h3>
+
+		<form action="" id="formCad" class="w-100">
+			<div class="mb-3">
+				<label for="id" class="form-label">ID:</label> <input type="text"
+					class="form-control" id="id" readonly="readonly">
+			</div>
+			<div class="mb-3">
+				<label for="nome" class="form-label">Nome:</label> <input
+					type="text" class="form-control" id="nome"
+					placeholder="Insira seu nome">
+			</div>
+			<div class="mb-3">
+				<label for="idade" class="form-label">Idade:</label> <input
+					type="number" class="form-control" id="idade"
+					placeholder="Insira sua idade">
+			</div>
+		</form>
+
+		<div class="d-flex flex-row gap-2">
+			<button type="button" class="btn btn-primary"
+				onclick="salvarUsuario()">SALVAR</button>
+			<button type="button" class="btn btn-success" data-bs-toggle="modal"
+				data-bs-target="#pesquisaModal" onclick="limparModal()">PESQUISAR</button>
+			<button type="button" class="btn btn-secondary"
+				onclick="limparFormulario()">Limpar</button>
+
+		</div>
+
+
+
+
+		<div class="modal fade" id="pesquisaModal" tabindex="-1"
+			aria-labelledby="exampleModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="exampleModalLabel">Pesquisar</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"
+							aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<div class="d-flex flex-row gap-2">
+							<form>
+								<label for="nomeBusca" class="form-label">Nome:</label> <input
+									id="nomeBusca" placeholder="pesquisar..." class="form-control" />
+							</form>
+							<button type="button"
+								class="btn btn-primary h-100 align-self-end"
+								onclick="buscarUsuario()">Buscar</button>
+						</div>
+
+						<div style="height: 200px; overflow: scroll;" id="idTabela">
+							<table class="table" id="tableBusca">
+								<thead>
+									<tr>
+										<th scope="col">Id</th>
+										<th scope="col">Nome</th>
+										<th scope="col">Idade</th>
+										<th scope="col">Ações</th>
+									</tr>
+								</thead>
+								<tbody>
+
+								</tbody>
+							</table>
+						</div>
+
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary"
+							data-bs-dismiss="modal">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://code.jquery.com/jquery-3.6.3.min.js"
+		integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU="
+		crossorigin="anonymous"></script>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+		crossorigin="anonymous"></script>
+
+	<script type="text/javascript">
+	
+		function limparModal(){
+			$('#tableBusca > tbody > tr').remove();
+			$('#nomeBusca').val(null);
+		}
+	
+		function deletarUsuario(id) {
+			if (confirm("Deseja realmente deletar o usuário?")) {
+				$.ajax({
+					method : "DELETE",
+					url : "deletar",
+					data : "id=" + id,
+					success : function(response) {
+						alert("Usuário deletado com sucesso!");
+						$('#' + id).remove();
+						$('#pesquisaModal').modal('hide');
+					}
+				}).fail(
+						function(xhr, status, erroThrown) {
+							alert("erro ao deletar o usuário!" + " "
+									+ xhr.responseText)
+						});
+			}
+		}
+
+		function salvarUsuario() {
+			var id = $('#id').val();
+			var nome = $('#nome').val();
+			var idade = $('#idade').val();
+
+			if (nome == null || nome.trim() == '') {
+				alert("Preencha todos os campos!");
+				$('#nome').focus();
+				return;
+			}
+
+			if (idade == null || idade.trim() == '' || nome <= 0) {
+				alert("Preencha todos os campos!");
+				$('#idade').focus();
+				return;
+			}
+
+			$.ajax({
+				method : "POST",
+				url : "salvar",
+				data : JSON.stringify({
+					id : id,
+					nome : nome,
+					idade : idade
+				}),
+				contentType : "application/json",
+				success : function(response) {
+					$('#id').val(id);
+					alert("Usuário salvo com sucesso!");
+					limparFormulario();
+				}
+			}).fail(function(xhr, status, erroThrown) {
+				alert("erro ao salvar usuário " + xhr.responseText);
+			})
+		}
+
+		function buscarUsuario() {
+			var nome = $('#nomeBusca').val();
+
+			$
+					.ajax(
+							{
+								method : "GET",
+								url : "buscar-por-nome",
+								data : "nome=" + nome,
+								contentType: 'application/json',
+								success : function(response) {
+									
+									for (var i = 0; i < response.length; i++) {
+										if (response == null) {
+											alert("Usuário " + nome
+													+ " não foi encontrado.")
+										}
+										$('#tableBusca > tbody')
+												.append(
+														'<tr id="'+response[i].id+'"><td>'
+																+ response[i].id
+																+ '</td><td>'
+																+ response[i].nome
+																+ '</td><td>'
+																+ response[i].idade
+																+ '</td><td><button type="button" class="btn btn-primary" onclick="editarUsuario('
+																+ response[i].id
+																+ ')">VER</button> <button type="button" class="btn btn-danger" onclick="deletarUsuario('
+																+ response[i].id
+																+ ')">APAGAR</td></tr>')
+									}
+								}
+							}).fail(
+							function(xhr, status, erroThrown) {
+								alert("Erro ao buscar por " + nomeBusca
+										+ xhr.responseText);
+							})
+		}
+
+		function editarUsuario(id) {
+			$.ajax({
+				method : "GET",
+				url : "buscar-por-id",
+				data : "id=" +id,
+				contentType: 'application/json',
+				success : function(response) {
+					$('#id').val(response.id);
+					$('#nome').val(response.nome);
+					$('#idade').val(response.idade);
+					$('#pesquisaModal').modal('hide');
+				}
+			}).fail(function(xhr, status, erroThronw) {
+				alert("erro ao atualizar o usuário!");
+			})
+		}
+
+		function limparFormulario() {
+			$('#id').val(null);
+			$('#nome').val(null);
+			$('#idade').val(null);
+		}
+	</script>
+</body>
+</html>
